@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "${DOCKERHUB_USERNAME}/kiii-jenkins-pipeline:${BUILD_NUMBER}"
+        LOCAL_IMAGE = "kiii-jenkins-pipeline:${BUILD_NUMBER}"
     }
 
     stages {
@@ -14,15 +14,16 @@ pipeline {
 
         stage('Build image') {
             steps {
-                sh 'docker build -t "$DOCKER_IMAGE" .'
+                sh 'docker build -t "$LOCAL_IMAGE" .'
             }
         }
 
         stage('Push image') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_TOKEN')]) {
+                    sh 'docker tag "$LOCAL_IMAGE" "$DOCKERHUB_USERNAME/kiii-jenkins-pipeline:$BUILD_NUMBER"'
                     sh 'echo "$DOCKERHUB_TOKEN" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin'
-                    sh 'docker push "$DOCKER_IMAGE"'
+                    sh 'docker push "$DOCKERHUB_USERNAME/kiii-jenkins-pipeline:$BUILD_NUMBER"'
                 }
             }
         }
